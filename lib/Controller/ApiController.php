@@ -33,6 +33,7 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\IConfig;
 use OCP\IUserManager;
+use OCP\Contacts\IManager as IContactsManager;
 use OCP\Security\ISecureRandom;
 
 use OCA\Polls\Db\Event;
@@ -70,6 +71,7 @@ class ApiController extends Controller {
 		IGroupManager $groupManager,
 		IRequest $request,
 		IUserManager $userManager,
+		IContactsManager $contactsManager,
 		$userId,
 		EventMapper $eventMapper,
 		OptionsMapper $optionsMapper,
@@ -79,6 +81,7 @@ class ApiController extends Controller {
 		parent::__construct($appName, $request);
 		$this->userId = $userId;
 		$this->groupManager = $groupManager;
+		$this->contactsManager = $contactsManager;
 		$this->systemConfig = $systemConfig;
 		$this->userManager = $userManager;
 		$this->eventMapper = $eventMapper;
@@ -108,6 +111,7 @@ class ApiController extends Controller {
 				}
 			}
 		}
+
 		if ($getUsers) {
 			$users = $this->userManager->searchDisplayName($query);
 			foreach ($users as $user) {
@@ -118,8 +122,35 @@ class ApiController extends Controller {
 						'displayName' => $user->getDisplayName(),
 						'avatarURL' => '',
 						'lastLogin' => $user->getLastLogin(),
+						'user' => $user,
 						'cloudId' => $user->getCloudId()
 					];
+				}
+			}
+		}
+
+
+		if ($this->contactsManager->isEnabled()) {
+			$contacts = $this->contactsManager->search($query, array('FN', 'EMAIL'));
+			$receivers = array();
+			foreach ($contacts as $contact) {
+				$id = $contact['UID'];
+				$fn = $contact['FN'];
+				$email = $contact['EMAIL'];
+				if (!is_array($email)) {
+					$email = array($email);
+				}
+
+				// loop through all email addresses of this contact
+				foreach ($email as $e) {
+					$displayName = $fn . " <$e>";
+					$list[] = array(
+						'id' => $id,
+						'type' => 'contact',
+						'avatarURL' => '',
+						'email' => $email,
+						'contact' => $contact,
+						'displayName' => $fn);
 				}
 			}
 		}
@@ -131,7 +162,7 @@ class ApiController extends Controller {
 	* @NoAdminRequired
 	* @NoCSRFRequired
 	* @return Array
-	*/	
+	*/
 	function convertAccessList($item) {
 		$split = Array();
 		if (strpos($item, 'user_') === 0) {
@@ -152,7 +183,7 @@ class ApiController extends Controller {
 				'avatarURL' => '',
 			];
 		}
-		
+
 
 		return($split);
 	}
@@ -164,12 +195,12 @@ class ApiController extends Controller {
 	* @param string $hash
 	* @return DataResponse
 	*/
-	
+
 	public function getPoll($hash) {
 		if (!\OC::$server->getUserSession()->getUser() instanceof IUser) {
 			return new DataResponse(null, Http::STATUS_UNAUTHORIZED);
 		}
-		
+
 		try {
 			$poll = $this->eventMapper->findByHash($hash);
 
@@ -182,7 +213,7 @@ class ApiController extends Controller {
 			}
 
 			if ($poll->getType() == 0) {
-				$pollType = 'datePoll'; 
+				$pollType = 'datePoll';
 			} else {
 				$pollType = 'textPoll';
 			};
@@ -200,12 +231,12 @@ class ApiController extends Controller {
 				$accessList = array_map(Array($this,'convertAccessList'), $accessList);
 				$accessType = 'select';
 			}
-				
+
 			$data = array();
 			$commentsList = array();
 			$optionList = array();
 			$votesList = array();
-			
+
 		} catch (DoesNotExistException $e) {
 			return new DataResponse($e, Http::STATUS_NOT_FOUND);
 		};
@@ -252,7 +283,7 @@ class ApiController extends Controller {
 		} catch (DoesNotExistException $e) {
 			// ignore
 		};
-	
+
 		$data['poll'] = [
 			'result' => 'found',
 			'mode' => $mode,
@@ -283,7 +314,7 @@ class ApiController extends Controller {
 
 		return new DataResponse($data, Http::STATUS_OK);
 	}
-	
+
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
@@ -308,7 +339,7 @@ class ApiController extends Controller {
 		$newEvent->setIsAnonymous($event['isAnonymous']);
 		$newEvent->setFullAnonymous($event['fullAnonymous']);
 		$newEvent->setDisallowMaybe($event['disallowMaybe']);
-	
+
 		if ($event['access'] === 'select') {
 			$shareAccess = '';
 			foreach ($shares as $shareElement) {
@@ -328,7 +359,7 @@ class ApiController extends Controller {
 		} else {
 			$newEvent->setExpire(null);
 		}
-		
+
 		if ($event['type'] === 'datePoll') {
 			$newEvent->setType(0);
 		} elseif ($event['type'] === 'textPoll') {
@@ -343,7 +374,7 @@ class ApiController extends Controller {
 			if ($oldPoll->getOwner() !== $userId) {
 				// If current user is not owner of existing poll deny access
 				return new DataResponse(null, Http::STATUS_UNAUTHORIZED);
-			} 
+			}
 
 			// else take owner, hash and id of existing poll
 			$newEvent->setOwner($oldPoll->getOwner());
@@ -351,7 +382,7 @@ class ApiController extends Controller {
 			$newEvent->setId($oldPoll->getId());
 			$this->eventMapper->update($newEvent);
 			$this->optionsMapper->deleteByPoll($newEvent->getId());
-					
+
 		} elseif ($mode === 'create') {
 			// Create new poll
 			// Define current user as owner, set new creation date and create a new hash
@@ -365,25 +396,25 @@ class ApiController extends Controller {
 			));
 			$newEvent = $this->eventMapper->insert($newEvent);
 		}
-		
+
 		// Update options
 		if ($event['type'] === 'datePoll') {
 			foreach ($options['pollDates'] as $optionElement) {
 				$newOption = new Options();
-				
+
 				$newOption->setPollId($newEvent->getId());
 				$newOption->setPollOptionText(date('Y-m-d H:i:s', $optionElement['timestamp']));
 				$newOption->setTimestamp($optionElement['timestamp']);
-				
+
 				$this->optionsMapper->insert($newOption);
 			}
 		} elseif ($event['type'] === "textPoll") {
 			foreach ($options['pollTexts'] as $optionElement) {
 				$newOption = new Options();
-				
+
 				$newOption->setPollId($newEvent->getId());
 				$newOption->setpollOptionText(htmlspecialchars($optionElement['text']));
-				
+
 				$this->optionsMapper->insert($newOption);
 			}
 		}
