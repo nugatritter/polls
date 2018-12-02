@@ -21,7 +21,7 @@
   -->
 
   <template>
-	<div id="create-poll">
+	<div id="app-content">
 		<controls :index-page="indexPage" :intitle="title">
 			<button @click="writePoll(poll.mode)" class="button btn primary" :disabled="writingPoll">
 				<span>{{ saveButtonTitle }}</span>
@@ -444,7 +444,7 @@ export default {
 </script>
 
 <style lang="scss">
-#create-poll {
+#app-content {
     width: 100%;
     display: flex;
     input.hasTimepicker {

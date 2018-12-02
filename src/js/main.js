@@ -22,7 +22,10 @@
  */
 
 import Vue from 'vue';
+import VueRouter from 'vue-router'
 import Create from './Create.vue';
+import PollList from './List.vue';
+import Nextcloud from './mixins/Nextcloud';
 import {DatetimePicker} from 'nextcloud-vue';
 import Controls from './components/_base-controls.vue';
 import SideBarClose from './components/sideBarClose.vue';
@@ -30,8 +33,11 @@ import UserDiv from './components/_base-UserDiv.vue';
 import SideBar from './components/_base-SideBar.vue';
 import ShareDiv from './components/shareDiv.vue';
 
-Vue.config.debug = true
-Vue.config.devTools = true
+Vue.use(VueRouter);
+Vue.mixin(Nextcloud);
+Vue.config.debug = true;
+Vue.config.devTools = true;
+Vue.component('PollList', PollList);
 Vue.component('Controls', Controls);
 Vue.component('DatePicker', DatetimePicker);
 Vue.component('SideBarClose', SideBarClose);
@@ -39,18 +45,16 @@ Vue.component('UserDiv', UserDiv);
 Vue.component('SideBar', SideBar);
 Vue.component('ShareDiv', ShareDiv);
 
-Vue.mixin({
-	methods: {
-		t: function(app, text, vars, count, options) {
-			return OC.L10N.translate(app, text, vars, count, options)
-		},
-		n: function(app, textSingular, textPlural, count, vars, options) {
-			return OC.L10N.translatePlural(app, textSingular, textPlural, count, vars, options)
-		}
-	}
-});
 
-new Vue({
-	el: '#create-poll',
-	render: h => h(Create)
-});
+const routes = [
+  { path: '/create', component: Create },
+  // { path: '/vote', component: Vote },
+]
+
+const router = new VueRouter({
+  routes
+})
+
+const app = new Vue({
+  router
+}).$mount('#content')

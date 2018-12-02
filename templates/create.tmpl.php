@@ -24,5 +24,18 @@
 
 ?>
 
-<div id="create-poll"></div>
+
 <?php \OCP\Util::addScript('polls', 'create-poll'); ?>
+
+<div id="app-navigation">
+	<poll-list></poll-list>
+  <p>
+    <!-- use router-link component for navigation. -->
+    <!-- specify the link by passing the `to` prop. -->
+    <!-- `<router-link>` will be rendered as an `<a>` tag by default -->
+    <router-link to="/create">Go to Create</router-link>
+  </p>
+  <!-- route outlet -->
+  <!-- component matched by the route will render here -->
+</div>
+<router-view></router-view>
