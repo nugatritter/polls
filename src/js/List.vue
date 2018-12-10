@@ -25,13 +25,12 @@
 		<router-link to="/create" class="button new">
 			<span class="symbol icon-add"></span><span class="hidden-visually">Neu</span>
 		</router-link>
-
 		<div id="emptycontent" class="">
 			<div class="icon-polls"></div>
 			<h2>{{ t('polls', 'No existing polls.') }}</h2>
-			<a href="/index.php/apps/polls/create" class="button new">
+			<router-link to="/create" class="button new">
 				<span>{{ t('polls', 'Click here to add a poll') }}</span>
-			</a>
+			</router-link>
 		</div>
 	</div>
 </template>

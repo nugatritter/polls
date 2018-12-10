@@ -26,7 +26,8 @@ import VueRouter from 'vue-router'
 import Create from './Create.vue';
 import PollList from './List.vue';
 import Nextcloud from './mixins/Nextcloud';
-import {DatetimePicker} from 'nextcloud-vue';
+import { DatetimePicker } from 'nextcloud-vue';
+import { AppNavigation } from 'nextcloud-vue'
 import Controls from './components/_base-controls.vue';
 import SideBarClose from './components/sideBarClose.vue';
 import UserDiv from './components/_base-UserDiv.vue';
@@ -40,6 +41,7 @@ Vue.config.devTools = true;
 Vue.component('PollList', PollList);
 Vue.component('Controls', Controls);
 Vue.component('DatePicker', DatetimePicker);
+Vue.component('AppNavigation', AppNavigation);
 Vue.component('SideBarClose', SideBarClose);
 Vue.component('UserDiv', UserDiv);
 Vue.component('SideBar', SideBar);
