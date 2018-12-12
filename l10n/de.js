@@ -87,6 +87,7 @@ OC.L10N.register(
     "Comments" : "Kommentare",
     "Login or ..." : "Einloggen oder ...",
     "New comment …" : "Neuer Kommentar ...",
-    "No comments yet. Be the first." : "Bisher keine Kommentare. Sei die/der Erste."
+    "No comments yet. Be the first." : "Bisher keine Kommentare. Sei die/der Erste.",
+	"Allow \"maybe\" vote" : "Erlaube \"vielleicht\""
 },
 "nplurals=2; plural=(n != 1);");
